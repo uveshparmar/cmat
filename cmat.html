@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CMAT Practice Lab</title>
+<style>
+:root{--bg:#f4f7fc;--card:#fff;--ink:#172033;--muted:#64748b;--primary:#3157d5;--line:#e2e8f0;--good:#e9f9ef;--bad:#fff0f0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+header{background:#172554;color:#fff;padding:22px 16px}header .wrap,main{max-width:1050px;margin:auto}.brand{font-size:24px;font-weight:800}.sub{color:#dbeafe;font-size:14px}
+main{padding:24px 16px 50px}.hero{background:linear-gradient(120deg,#e1eaff,#f8faff);border:1px solid #dce6ff;border-radius:18px;padding:22px;margin-bottom:24px}
+h1{font-size:clamp(24px,4vw,34px);line-height:1.2;margin:6px 0 10px}h2{font-size:21px;margin:26px 0 12px}p{margin:8px 0}.muted{color:var(--muted)}.tag{display:inline-block;background:#e9edff;color:#2c439d;border-radius:30px;padding:4px 10px;font-size:12px;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:0 3px 12px #17255408}.card h3{margin:8px 0 4px;font-size:18px}
+button,.btn{border:0;border-radius:10px;background:var(--primary);color:white;font-weight:750;padding:11px 15px;font-size:15px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+button:hover,.btn:hover{filter:brightness(.95)}.secondary{background:#e9edff;color:#293e9b}.outline{background:#fff;color:#263b91;border:1px solid #cdd7ff}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.question{margin-bottom:14px}.qmeta{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}.qtext{font-size:17px;font-weight:750;margin:8px 0 14px}
+.option{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin:8px 0;background:#fff;cursor:pointer}.option:hover{border-color:#a5b4fc}.option input{margin-top:5px}.solution{margin-top:12px;padding:13px;background:#f8fafc;border:1px solid var(--line);border-radius:10px}.correct{background:var(--good);border-color:#b7e5c5}.incorrect{background:var(--bad);border-color:#f1b9b9}.score{font-size:34px;font-weight:850;color:var(--primary)}.progress{height:8px;background:#e2e8f0;border-radius:20px;overflow:hidden;margin:12px 0}.progress span{display:block;height:100%;background:var(--primary)}.notice{font-size:13px;color:var(--muted)}.exambar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#172554;color:#fff;padding:12px 16px;border-radius:12px;margin:0 0 16px;box-shadow:0 5px 18px #17255422}.exambar .timer{font-size:22px;font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:.5px}.exambar .timer.warning{color:#fecaca}.exambar .exam-note{font-size:13px;color:#dbeafe}.exambar .answered-count{font-size:13px;color:#dbeafe}footer{text-align:center;padding:20px;color:var(--muted);font-size:13px}
+@media(max-width:600px){main{padding:16px 12px 35px}.hero{padding:18px}.card{padding:15px}.option{padding:10px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="brand">🎓 CMAT Practice Lab</div><div class="sub">CMAT-style topic practice · full 100-question mock · timed exam · solutions after submission</div></div></header>
+<main id="app"></main>
+<footer>CMAT Practice Lab · Single-file HTML · No login, installation, server or database required</footer>
+<script>
+const topics = [
+ {id:'percentages',section:'Quantitative Techniques & Data Interpretation',name:'Percentages',desc:'Percentage of a number, increase and decrease.'},
+ {id:'ratio',section:'Quantitative Techniques & Data Interpretation',name:'Ratio & Proportion',desc:'Ratios, sharing amounts and proportions.'},
+ {id:'averages',section:'Quantitative Techniques & Data Interpretation',name:'Averages',desc:'Mean, totals and missing values.'},
+ {id:'profit',section:'Quantitative Techniques & Data Interpretation',name:'Profit & Loss',desc:'Cost price, selling price, profit and discount.'},
+ {id:'interest',section:'Quantitative Techniques & Data Interpretation',name:'Simple Interest',desc:'Principal, rate, time and interest.'},
+ {id:'work',section:'Quantitative Techniques & Data Interpretation',name:'Time & Work',desc:'Work rates and fractions of work.'},
+ {id:'series',section:'Logical Reasoning',name:'Number Series',desc:'Find patterns and the next number.'},
+ {id:'alphabet',section:'Logical Reasoning',name:'Alphabet Series',desc:'Letter positions and patterns.'},
+ {id:'coding',section:'Logical Reasoning',name:'Coding-Decoding',desc:'Letter shifts and simple codes.'},
+ {id:'directions',section:'Logical Reasoning',name:'Direction Sense',desc:'Track movement and final direction.'},
+ {id:'blood',section:'Logical Reasoning',name:'Blood Relations',desc:'Understand family relationships.'},
+ {id:'grammar',section:'Language Comprehension',name:'English Grammar',desc:'Choose grammatically correct sentences.'},
+ {id:'vocab',section:'Language Comprehension',name:'Vocabulary',desc:'Synonyms and antonyms.'},
+ {id:'gk',section:'General Awareness',name:'General Awareness',desc:'Static general knowledge practice.'},
+ {id:'entrepreneur',section:'Innovation & Entrepreneurship',name:'Innovation & Entrepreneurship',desc:'Startups, business concepts and innovation.'}
+];
+const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const fmt=n=>Number.isInteger(n)?String(n):String(Math.round(n*100)/100);
+function mcq(type,question,options,answer,explanation){const correct=options[answer];const opts=shuffle(options);return {type,question,options:opts,answer:opts.indexOf(correct),explanation}}
+function makeQuestion(topic){
+ let a,b,n,p,ans,opts,vals,word,coded;
+ switch(topic){
+ case 'percentages':
+  n=pick([120,150,200,240,250,300,360,400,500,600]);p=pick([5,10,15,20,25,30,40,50]);ans=n*p/100;
+  return mcq('Percentage',`What is ${p}% of ${n}?`,[ans,ans+10,Math.max(0,ans-5),ans+20].map(fmt),0,`Percentage amount = number × percentage ÷ 100 = ${n} × ${p} ÷ 100 = ${fmt(ans)}.`);
+ case 'ratio':
+  a=rand(2,5);b=rand(2,6);n=rand(3,8);ans=a*n;
+  return mcq('Ratio',`The ratio of A to B is ${a}:${b}. If A + B = ${(a+b)*n}, what is A?`,[ans,ans+n,b*n,(a+b)*n-n].map(String),0,`Total parts = ${a}+${b}=${a+b}. One part = ${(a+b)*n} ÷ ${a+b} = ${n}. A = ${a} × ${n} = ${ans}.`);
+ case 'averages':
+  n=rand(3,6);vals=Array.from({length:n-1},()=>rand(10,35));ans=rand(18,35);vals.push(ans*n-vals.reduce((x,y)=>x+y,0));
+  return mcq('Average',`Find the average of ${vals.join(', ')}.`,[ans,ans+2,ans-2,ans+5].map(String),0,`Add the values to get ${vals.reduce((x,y)=>x+y,0)}. Divide by ${n}: ${vals.reduce((x,y)=>x+y,0)} ÷ ${n} = ${ans}.`);
+ case 'profit':
+  a=rand(4,20)*50;p=pick([10,15,20,25,30,40]);b=a*(100+p)/100;
+  return mcq('Profit & Loss',`An item costs ₹${a} and is sold for ₹${b}. What is the profit percentage?`,[p,p+5,p-5,p*2].map(x=>x+'%'),0,`Profit = ₹${b-a}. Profit % = (profit ÷ cost price) × 100 = (${b-a} ÷ ${a}) × 100 = ${p}%.`);
+ case 'interest':
+  a=rand(5,30)*100;p=pick([4,5,6,8,10]);n=rand(1,4);ans=a*p*n/100;
+  return mcq('Simple Interest',`Find the simple interest on ₹${a} at ${p}% per year for ${n} year(s).`,[ans,ans+50,Math.max(0,ans-50),ans*2].map(x=>'₹'+fmt(x)),0,`SI = Principal × Rate × Time ÷ 100 = ${a} × ${p} × ${n} ÷ 100 = ₹${fmt(ans)}.`);
+ case 'work':
+  a=rand(4,15);b=rand(1,a-1);let g=(x,y)=>y?g(y,x%y):x;let num=b/g(a,b),den=a/g(a,b);ans=`${num}/${den}`;
+  return mcq('Time & Work',`A person completes a job in ${a} days at a constant rate. What fraction is completed in ${b} day(s)?`,[ans,`${b+1}/${a}`,`${b}/${a+1}`,`1/${a}`],0,`One day's work = 1/${a}. In ${b} days, work = ${b}/${a}, simplified to ${ans}.`);
+ case 'series':
+  a=rand(2,15);b=rand(2,9);vals=Array.from({length:5},(_,i)=>a+i*b);ans=a+5*b;
+  return mcq('Number Series',`Find the next number: ${vals.join(', ')}, ?`,[ans,ans+b,ans-1,ans+2].map(String),0,`The sequence increases by ${b} each time. Next number = ${vals[4]} + ${b} = ${ans}.`);
+ case 'alphabet':
+  a=rand(1,8);b=pick([2,3,4]);vals=Array.from({length:4},(_,i)=>String.fromCharCode(65+a-1+i*b));ans=String.fromCharCode(65+a-1+4*b);
+  return mcq('Alphabet Series',`Which letter comes next: ${vals.join(', ')}, ?`,[ans,String.fromCharCode(ans.charCodeAt(0)+1),String.fromCharCode(ans.charCodeAt(0)-1),vals[3]],0,`Move forward ${b} letters each time. After ${vals[3]} comes ${ans}.`);
+ case 'coding':
+  word=pick(['CAT','DOG','PEN','MAP','SUN','BOX','CUP','HAT','BUS','JAM']);coded=[...word].map(c=>String.fromCharCode(c.charCodeAt(0)+1)).join('');
+  return mcq('Coding-Decoding',`If every letter is replaced by the next letter in the alphabet, how is ${word} coded?`,[coded,coded.slice(1)+coded[0],[...coded].reverse().join(''),word],0,`Move each letter forward one place: ${[...word].join(' → ')} becomes ${[...coded].join(' → ')}. The code is ${coded}.`);
+ case 'directions':
+  a=rand(4,12);b=rand(1,a-1);
+  return mcq('Direction Sense',`A person walks ${a} metres north and then ${b} metres south. Where are they relative to the starting point?`,[`North, ${a-b} metres`,`South, ${b} metres`,`East, ${a-b} metres`,`At the starting point`],0,`Northward distance ${a} m minus southward distance ${b} m leaves ${a-b} m north of the start.`);
+ case 'blood':
+  return pick([
+   mcq('Blood Relations','A is the brother of B. B is the sister of C. How is A related to C?',['Brother','Father','Uncle','Cousin'],0,'A and C are siblings; A is C’s brother.'),
+   mcq('Blood Relations','Rina is the mother of Karan. Karan is the father of Meena. How is Rina related to Meena?',['Grandmother','Aunt','Sister','Mother'],0,'Rina is Karan’s mother, and Karan is Meena’s father. Rina is Meena’s grandmother.'),
+   mcq('Blood Relations','Jay is the son of Pooja. Pooja is the daughter of Amit. How is Amit related to Jay?',['Grandfather','Brother','Uncle','Father'],0,'Amit is Pooja’s father, so he is Jay’s grandfather.'),
+   mcq('Blood Relations','Neha is Ravi’s sister. Kiran is Ravi’s mother. How is Kiran related to Neha?',['Mother','Cousin','Sister','Grandmother'],0,'Ravi and Neha are siblings; Kiran is Ravi’s mother, so she is Neha’s mother too.'),
+   mcq('Blood Relations','M is the father of N. N is the sister of P. How is M related to P?',['Father','Uncle','Brother','Cousin'],0,'N and P are siblings. M is N’s father, so M is P’s father.')
+  ]);
+ case 'grammar':
+  return pick([
+   mcq('Grammar','Choose the correct sentence.',['She goes to work every day.','She go to work every day.','She going to work every day.','She gone to work every day.'],0,'With “she” in the simple present tense, use “goes.”'),
+   mcq('Grammar','Choose the correct sentence.',['They have finished their work.','They has finished their work.','They is finished their work.','They was finish their work.'],0,'Use “have” with “they” and the past participle “finished.”'),
+   mcq('Grammar','Choose the correct word: He is ___ honest person.',['an','a','the','no article'],0,'“Honest” begins with a vowel sound, so use “an.”'),
+   mcq('Grammar','Choose the correct sentence.',['I have lived here for two years.','I am live here for two years.','I lives here for two years.','I living here for two years.'],0,'The present perfect describes a situation continuing to the present.'),
+   mcq('Grammar','Neither of the answers ___ correct.',['is','are','were','be'],0,'“Neither” is singular in this sentence, so use “is.”')
+  ]);
+ case 'vocab':
+  return pick([
+   mcq('Vocabulary','Choose the synonym of “rapid”.',['Fast','Quiet','Weak','Late'],0,'“Rapid” means fast or quick.'),
+   mcq('Vocabulary','Choose the antonym of “ancient”.',['Modern','Old','Historic','Past'],0,'“Modern” is the opposite of “ancient.”'),
+   mcq('Vocabulary','Choose the synonym of “assist”.',['Help','Stop','Hide','Refuse'],0,'“Assist” means to help.'),
+   mcq('Vocabulary','Choose the antonym of “expand”.',['Contract','Increase','Enlarge','Extend'],0,'“Contract” means to become smaller; it is the opposite of “expand.”'),
+   mcq('Vocabulary','Choose the synonym of “accurate”.',['Correct','Careless','Unclear','Slow'],0,'“Accurate” means correct or precise.')
+  ]);
+ case 'gk':
+  return pick([
+   mcq('General Awareness','Which organisation conducts the CMAT examination?',['National Testing Agency (NTA)','UPSC','RBI','SSC'],0,'The National Testing Agency conducts CMAT.'),
+   mcq('General Awareness','What is the capital of Gujarat?',['Gandhinagar','Ahmedabad','Surat','Rajkot'],0,'Gandhinagar is the capital of Gujarat.'),
+   mcq('General Awareness','Which is the central bank of India?',['Reserve Bank of India','State Bank of India','NABARD','SEBI'],0,'The Reserve Bank of India is India’s central bank.'),
+   mcq('General Awareness','Which planet is known as the Red Planet?',['Mars','Venus','Jupiter','Mercury'],0,'Mars is called the Red Planet because of its reddish appearance.'),
+   mcq('General Awareness','What does GST stand for in India?',['Goods and Services Tax','General Sales Tariff','Government Service Tax','Goods Supply Trade'],0,'GST stands for Goods and Services Tax.')
+  ]);
+ case 'entrepreneur':
+  return pick([
+   mcq('Entrepreneurship','What is a Minimum Viable Product (MVP)?',['A basic product version used to test an idea','A company’s annual profit','A final product with every feature','A marketing budget'],0,'An MVP is an early basic version used to test assumptions and gather feedback.'),
+   mcq('Entrepreneurship','What is a business model?',['How a business creates and earns value','A company logo','An attendance sheet','A tax receipt'],0,'A business model explains how a business creates, delivers and captures value.'),
+   mcq('Entrepreneurship','What does bootstrapping a startup usually mean?',['Building it using personal funds or early revenue','Listing shares on a stock exchange','Buying a competitor','Hiring only interns'],0,'Bootstrapping relies on personal funds and/or business revenue instead of outside investment.'),
+   mcq('Entrepreneurship','What is intellectual property?',['Creations of the mind protected by law','Office furniture','A monthly salary','A sales target'],0,'Intellectual property includes creations such as inventions, designs and original works.'),
+   mcq('Entrepreneurship','What is market research used for?',['Understanding customers and market demand','Choosing a random company name','Avoiding customer feedback','Calculating employee holidays'],0,'Market research helps assess customer needs, competitors and demand.')
+  ]);
+ }
+}
+
+/* Original CMAT-style question bank informed by published 2024–2025 paper analyses.
+   These are newly written practice questions, not copied official-paper questions. */
+const curatedQuestions = [
+ // Quantitative Techniques & Data Interpretation (15)
+ ['Quantitative Techniques & Data Interpretation','percentages','Percentages','A price rises from ₹800 to ₹920. What is the percentage increase?',['12%','15%','18%','20%'],1,'Increase = 920 − 800 = 120. Percentage increase = 120/800 × 100 = 15%.'],
+ ['Quantitative Techniques & Data Interpretation','ratio','Ratio & Proportion','The ratio of boys to girls is 7:5. If there are 144 students, how many are girls?',['50','60','72','84'],1,'Total parts = 12. One part = 144/12 = 12; girls = 5 × 12 = 60.'],
+ ['Quantitative Techniques & Data Interpretation','profit','Profit & Loss','An article marked at ₹2,000 is sold at a 10% discount. If its cost price is ₹1,500, what is the profit percentage?',['10%','15%','20%','25%'],2,'Selling price = ₹1,800. Profit = ₹300; profit percentage = 300/1,500 × 100 = 20%.'],
+ ['Quantitative Techniques & Data Interpretation','interest','Simple & Compound Interest','Find the simple interest on ₹6,000 at 7.5% per annum for 2 years.',['₹750','₹800','₹900','₹1,000'],2,'SI = PRT/100 = 6,000 × 7.5 × 2/100 = ₹900.'],
+ ['Quantitative Techniques & Data Interpretation','work','Time & Work','A can finish a task in 12 days and B in 18 days. How long will they take together?',['6 days','7.2 days','8 days','9 days'],1,'Combined rate = 1/12 + 1/18 = 5/36 task/day. Time = 36/5 = 7.2 days.'],
+ ['Quantitative Techniques & Data Interpretation','averages','Averages','The average of 8 numbers is 17. If one number, 24, is removed, what is the average of the remaining numbers?',['15','16','16','17'],1,'Original total = 8 × 17 = 136. Remaining total = 112; 112/7 = 16.'],
+ ['Quantitative Techniques & Data Interpretation','percentages','Mixtures','A 30-litre mixture contains milk and water in the ratio 4:1. How much water must be added to make the ratio 2:1?',['3 litres','5 litres','6 litres','8 litres'],2,'Milk = 24 L and water = 6 L. For 24:water = 2:1, water must be 12 L; add 6 L.'],
+ ['Quantitative Techniques & Data Interpretation','ratio','Time, Speed & Distance','A car travels 180 km in 3 hours. At the same speed, how far will it travel in 4.5 hours?',['240 km','250 km','270 km','300 km'],2,'Speed = 180/3 = 60 km/h. Distance = 60 × 4.5 = 270 km.'],
+ ['Quantitative Techniques & Data Interpretation','averages','Algebra','If 3x − 7 = 20, what is x?',['7','8','9','10'],2,'3x = 27, so x = 9.'],
+ ['Quantitative Techniques & Data Interpretation','averages','Number System','What is the least number that must be added to 563 to make it divisible by 9?',['1','2','3','4'],3,'563 has remainder 5 when divided by 9, so add 4 to reach 567.'],
+ ['Quantitative Techniques & Data Interpretation','percentages','Probability','A fair die is rolled once. What is the probability of getting a number greater than 4?',['1/6','1/3','1/2','2/3'],1,'Favourable outcomes are 5 and 6: 2/6 = 1/3.'],
+ ['Quantitative Techniques & Data Interpretation','ratio','Permutation & Combination','How many different arrangements can be made using all letters of the word CAT?',['3','4','6','9'],2,'All three letters are distinct, so arrangements = 3! = 6.'],
+ ['Quantitative Techniques & Data Interpretation','averages','Geometry & Mensuration','The length and breadth of a rectangle are 12 cm and 7 cm. What is its perimeter?',['19 cm','38 cm','42 cm','84 cm'],1,'Perimeter = 2(l + b) = 2(12 + 7) = 38 cm.'],
+ ['Quantitative Techniques & Data Interpretation','percentages','Data Interpretation','A shop sold 120, 150 and 180 units in January, February and March. What was the average monthly sale?',['140','150','160','170'],1,'Total = 450 units. Average = 450/3 = 150.'],
+ ['Quantitative Techniques & Data Interpretation','interest','Compound Interest','₹10,000 is invested at 10% compound interest annually for 2 years. What is the amount?',['₹11,000','₹12,000','₹12,100','₹12,200'],2,'Amount = 10,000 × 1.1² = ₹12,100.'],
+
+ // Logical Reasoning (15)
+ ['Logical Reasoning','series','Number Series','Find the next term: 3, 8, 15, 24, 35, __.',['44','46','48','50'],2,'Differences are 5, 7, 9, 11; next difference is 13, so 35 + 13 = 48.'],
+ ['Logical Reasoning','alphabet','Alphabet Series','Find the next letter: B, E, I, N, T, __.',['A','Z','B','C'],0,'Letter jumps are +3, +4, +5, +6; next is +7. T + 7 wraps to A.'],
+ ['Logical Reasoning','coding','Coding-Decoding','If TABLE is coded as UBCMF by shifting each letter one step forward, how is CHAIR coded?',['DIBJS','DIBIR','BGZHQ','DHBJS'],0,'Shift each letter forward by one: C→D, H→I, A→B, I→J, R→S.'],
+ ['Logical Reasoning','directions','Direction Sense','A person walks 5 km east, turns left and walks 3 km, then turns left and walks 5 km. Where are they from the start?',['3 km north','3 km south','5 km east','At the start'],0,'The east and west legs cancel; the person is 3 km north of the starting point.'],
+ ['Logical Reasoning','blood','Blood Relations','Pointing to a woman, Arun says, “She is the daughter of my mother’s only son.” How is the woman related to Arun?',['Sister','Daughter','Niece','Mother'],1,'Arun is his mother’s only son; his daughter is the woman described.'],
+ ['Logical Reasoning','series','Analogy','Book is to Reading as Fork is to __.',['Drawing','Eating','Writing','Cutting'],1,'A book is used for reading; a fork is used for eating.'],
+ ['Logical Reasoning','coding','Odd One Out','Choose the odd one out.',['Square','Triangle','Circle','Cube'],3,'Cube is three-dimensional; the others are two-dimensional shapes.'],
+ ['Logical Reasoning','blood','Syllogism','Statements: All roses are flowers. Some flowers fade quickly. Conclusion: Some roses fade quickly.',['Definitely follows','Definitely does not follow','Cannot be determined','Both statements are false'],2,'The flowers that fade quickly may or may not be roses, so the conclusion is not certain.'],
+ ['Logical Reasoning','directions','Seating Arrangement','P, Q and R sit in a row. Q is between P and R. If P is at the left end, who is at the right end?',['P','Q','R','Cannot be determined'],2,'With P at the left and Q between P and R, the order is P–Q–R.'],
+ ['Logical Reasoning','series','Clock Reasoning','What is the angle between the hands of a clock at 3:00?',['45°','60°','90°','120°'],2,'At 3:00 the minute hand is at 12 and hour hand at 3: angle = 90°.'],
+ ['Logical Reasoning','coding','Statement & Conclusion','Statement: All applicants must submit a photograph. Mira is an applicant. Conclusion: Mira must submit a photograph.',['Follows','Does not follow','Only if Mira asks','Cannot be determined'],0,'The rule applies to every applicant, including Mira.'],
+ ['Logical Reasoning','directions','Calendar','If today is Wednesday, what day will it be 10 days later?',['Friday','Saturday','Sunday','Monday'],1,'Ten days later is 7 + 3 days later than Wednesday, which is Saturday.'],
+ ['Logical Reasoning','series','Number Puzzle','If 4 workers make 4 chairs in 4 days, how many days will 8 workers take to make 8 chairs at the same rate?',['2','4','8','16'],1,'Each worker makes one chair in 4 days; 8 workers can make 8 chairs in 4 days.'],
+ ['Logical Reasoning','coding','Venn Diagram','Which relationship best represents sparrows, birds and animals?',['All separate','Sparrows inside birds, birds inside animals','Birds inside sparrows','Animals inside birds'],1,'Sparrows are birds, and birds are animals: nested sets.'],
+ ['Logical Reasoning','blood','Assumption','A company introduces a bus service for employees to reduce late arrivals. Which assumption is most relevant?',['Some late arrivals are caused by commuting difficulties','All employees dislike buses','The company will close its office','Employees never travel by car'],0,'The plan assumes commuting is one cause of lateness and that a bus service can help.'],
+
+ // Language Comprehension (15)
+ ['Language Comprehension','grammar','Grammar','Choose the grammatically correct sentence.',['Each of the players have a kit.','Each of the players has a kit.','Each players has a kit.','Each player have a kit.'],1,'“Each” is singular, so it takes “has.”'],
+ ['Language Comprehension','vocab','Vocabulary','Choose the closest synonym of “mitigate”.',['Worsen','Reduce','Ignore','Predict'],1,'Mitigate means to make something less severe or harmful.'],
+ ['Language Comprehension','vocab','Vocabulary','Choose the antonym of “scarce”.',['Rare','Limited','Abundant','Insufficient'],2,'Abundant means plentiful, the opposite of scarce.'],
+ ['Language Comprehension','grammar','Fill in the Blank','Despite ___ hard, he did not pass the test.',['work','worked','working','to working'],2,'“Despite” is followed by a noun or gerund: “working hard.”'],
+ ['Language Comprehension','grammar','Active and Passive Voice','Choose the correct passive form: “The manager approved the proposal.”',['The proposal approved the manager.','The proposal was approved by the manager.','The proposal is approving the manager.','The manager was approved by the proposal.'],1,'Past simple active changes to “was/were + past participle” in passive voice.'],
+ ['Language Comprehension','grammar','Sentence Correction','Choose the correct sentence.',['Neither Riya nor her friends was present.','Neither Riya nor her friends were present.','Neither Riya or her friends were present.','Neither Riya nor her friends is present yesterday.'],1,'With “neither…nor,” the verb commonly agrees with the nearer subject; “friends” is plural.'],
+ ['Language Comprehension','vocab','Idioms','“To hit the nail on the head” means:',['To make an accurate point','To damage something','To start an argument','To avoid an issue'],0,'The idiom means to describe exactly what is causing a situation or to be precisely right.'],
+ ['Language Comprehension','grammar','Prepositions','She has been working here ___ 2022.',['for','since','from','during'],1,'Use “since” with a starting point in time.'],
+ ['Language Comprehension','grammar','Para-jumble','Arrange logically: (1) Finally, review the result. (2) First, identify the problem. (3) Then, collect relevant facts. (4) Next, compare possible solutions.',['2-3-4-1','1-2-3-4','3-2-1-4','2-4-3-1'],0,'A logical process begins with the problem, gathers facts, compares solutions and reviews the result.'],
+ ['Language Comprehension','vocab','One-word Substitution','A person who starts and runs a business, taking financial risks, is an:',['Auditor','Entrepreneur','Creditor','Arbitrator'],1,'An entrepreneur starts and develops a business and bears associated risks.'],
+ ['Language Comprehension','grammar','Subject-Verb Agreement','The quality of these products ___ improved.',['have','are','has','were'],2,'The subject is “quality” (singular), not “products”; use “has.”'],
+ ['Language Comprehension','vocab','Vocabulary','Choose the synonym of “concise”.',['Brief','Confusing','Lengthy','Uncertain'],0,'Concise means brief while expressing the essential information.'],
+ ['Language Comprehension','grammar','Articles','He is ___ university student.',['a','an','the','no article'],0,'“University” begins with a /juː/ consonant sound, so “a” is correct.'],
+ ['Language Comprehension','grammar','Sentence Completion','The proposal was rejected ___ it lacked supporting evidence.',['although','because','unless','whereas'],1,'“Because” gives the reason for rejection.'],
+ ['Language Comprehension','grammar','Reading Comprehension','Passage: A city added dedicated cycle lanes. After six months, bicycle use increased and short car trips declined. Which conclusion is best supported?',['Cycle lanes may encourage cycling for short trips','All car journeys ended','Every resident cycles daily','The city removed public transport'],0,'The passage supports a link between cycle lanes, more bicycle use and fewer short car trips, but not the absolute claims.'],
+
+ // General Awareness (15)
+ ['General Awareness','gk','Indian Polity','Which part of the Indian Constitution contains the Fundamental Rights?',['Part II','Part III','Part IV','Part V'],1,'Fundamental Rights are set out in Part III of the Constitution.'],
+ ['General Awareness','gk','Economy','Which institution formulates monetary policy in India?',['Election Commission','Reserve Bank of India','NITI Aayog','SEBI'],1,'The RBI is responsible for monetary policy in India.'],
+ ['General Awareness','gk','Science','Which vitamin is synthesised in the skin through sunlight exposure?',['Vitamin A','Vitamin B12','Vitamin C','Vitamin D'],3,'Sunlight helps the skin synthesise vitamin D.'],
+ ['General Awareness','gk','Geography','Which is the longest river that flows entirely within India?',['Godavari','Ganga','Narmada','Mahanadi'],0,'The Godavari is commonly described as the longest river flowing entirely within India.'],
+ ['General Awareness','gk','History','Who founded the Maurya Empire?',['Ashoka','Chandragupta Maurya','Harsha','Kanishka'],1,'Chandragupta Maurya founded the Maurya Empire around the 4th century BCE.'],
+ ['General Awareness','gk','International Organisations','Where is the headquarters of the World Health Organization?',['Paris','Geneva','New York','Rome'],1,'The WHO headquarters is in Geneva, Switzerland.'],
+ ['General Awareness','gk','Sports','How many players from one team are on the field in a standard cricket match?',['9','10','11','12'],2,'A cricket team fields 11 players.'],
+ ['General Awareness','gk','Indian Economy','What does GDP measure?',['Total value of final goods and services produced within a country in a period','Only government tax revenue','Only exports','The total population'],0,'GDP measures the value of final goods and services produced within a country over a period.'],
+ ['General Awareness','gk','Environment','The ozone layer is primarily found in which atmospheric layer?',['Troposphere','Stratosphere','Mesosphere','Thermosphere'],1,'Most atmospheric ozone is concentrated in the stratosphere.'],
+ ['General Awareness','gk','Awards & Culture','The classical dance form Kathak is strongly associated with which region?',['North India','Kerala only','Assam only','Andaman Islands'],0,'Kathak developed primarily in North India.'],
+ ['General Awareness','gk','Technology','What does URL stand for?',['Uniform Resource Locator','Universal Record Link','Unified Reference Language','User Route Location'],0,'URL stands for Uniform Resource Locator.'],
+ ['General Awareness','gk','Indian Institutions','Which body regulates the securities market in India?',['SEBI','IRDAI','NABARD','FSSAI'],0,'SEBI regulates India’s securities market.'],
+ ['General Awareness','gk','Science','What is the chemical symbol for sodium?',['So','S','Na','Sd'],2,'Sodium’s chemical symbol is Na, from the Latin name natrium.'],
+ ['General Awareness','gk','Indian Geography','Which Indian state has the longest coastline?',['Gujarat','Tamil Nadu','Andhra Pradesh','Maharashtra'],0,'Gujarat has the longest coastline among Indian states.'],
+ ['General Awareness','gk','Books & Authors','Who wrote the book “The Discovery of India”?',['Mahatma Gandhi','Jawaharlal Nehru','Rabindranath Tagore','Sardar Patel'],1,'Jawaharlal Nehru wrote The Discovery of India.'],
+
+ // Innovation & Entrepreneurship (15)
+ ['Innovation & Entrepreneurship','entrepreneur','Startup Finance','An angel investor typically provides:',['Early-stage capital to a startup','Only government tax audits','A guaranteed bank loan','Free office rent by law'],0,'Angel investors often invest their own money in early-stage businesses.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Startup Strategy','Bootstrapping means:',['Relying mainly on founders’ resources and business revenue','Raising money only through an IPO','Selling the business before launch','Borrowing from every competitor'],0,'Bootstrapped startups rely on founders’ funds and/or revenue rather than external equity investment.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Lean Startup','What is the main purpose of an MVP?',['Test key assumptions with a basic usable product','Launch every planned feature at once','Avoid speaking to customers','Calculate income tax only'],0,'An MVP helps test assumptions and learn from early users with minimal effort.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Intellectual Property','A trademark primarily protects:',['Brand identifiers such as names and logos','A scientific law','Every business idea automatically','A company’s annual budget'],0,'Trademarks distinguish the goods or services of one business from another.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Business Planning','A feasibility study is conducted mainly to:',['Assess whether a proposed venture is viable','Guarantee profit','Replace customer research','Settle all future legal disputes'],0,'A feasibility study assesses market, technical, financial and operational viability.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Entrepreneur Types','A Fabian entrepreneur is generally characterised by:',['Caution and reluctance to adopt change until necessary','Immediate adoption of every new idea','Avoiding all business activity','Investing only in government bonds'],0,'Fabian entrepreneurs are cautious and adopt changes slowly, often when compelled.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Business Model','A value proposition explains:',['Why a customer should choose a product or service','The company’s office address','The founder’s academic marks','The number of tax forms filed'],0,'A value proposition communicates the benefit and reason for choosing the offering.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Market Research','Which is an example of primary market research?',['Interviewing potential customers directly','Reading an old published industry report only','Using a public census table only','Reviewing a competitor’s annual report only'],0,'Direct interviews collect first-hand information, so they are primary research.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Funding','Venture capital is most commonly associated with:',['Equity investment in businesses with high growth potential','A fixed deposit with guaranteed returns','A consumer warranty','A government identity card'],0,'Venture capital investors take equity stakes in businesses with growth potential.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Innovation','An incremental innovation is one that:',['Improves an existing product or process gradually','Always invents a completely new industry','Cannot be tested','Is unrelated to customer value'],0,'Incremental innovation makes relatively small improvements to existing offerings or processes.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Business Finance','Break-even occurs when:',['Total revenue equals total costs','Revenue is zero','Fixed costs are zero','Profit is at its maximum'],0,'At break-even, there is neither profit nor loss because revenue equals total costs.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Intellectual Property','A patent generally protects:',['A qualifying invention for a limited period','A company’s everyday slogan in every case','A customer list automatically','A business location'],0,'A patent protects a qualifying invention under the applicable law for a limited term.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Business Growth','Franchising usually allows a franchisee to:',['Operate using a franchisor’s brand and business system under an agreement','Own the franchisor automatically','Avoid all contractual obligations','Use any brand without permission'],0,'A franchisee operates under the franchisor’s brand and system according to a contract.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Social Entrepreneurship','The primary goal of a social enterprise is to:',['Address a social or environmental problem using a sustainable model','Maximise losses','Avoid measuring impact','Replace every public institution'],0,'Social enterprises pursue a social/environmental mission while seeking a viable operating model.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Startup Valuation','Pre-money valuation refers to a startup’s value:',['Before a new investment is added','Only after all future profits are known','After a company is liquidated','Equal to its annual sales in every case'],0,'Pre-money valuation is the agreed value of a company immediately before a new investment.'],
+ // Additional questions to complete a 20-question bank per section
+ ['Quantitative Techniques & Data Interpretation','percentages','Partnership','A and B invest ₹20,000 and ₹30,000 for the same period. If profit is ₹25,000, what is B’s share?',['₹10,000','₹12,500','₹15,000','₹18,000'],2,'Profit is shared in the ratio 2:3. B receives 3/5 × ₹25,000 = ₹15,000.'],
+ ['Quantitative Techniques & Data Interpretation','ratio','HCF & LCM','The HCF of 36 and 60 is:',['6','12','18','24'],1,'12 is the greatest number that divides both 36 and 60 exactly.'],
+ ['Quantitative Techniques & Data Interpretation','averages','Quadratic Equations','The roots of x² − 9 = 0 are:',['3 only','−3 only','3 and −3','9 and −9'],2,'x² = 9, so x = ±3.'],
+ ['Quantitative Techniques & Data Interpretation','interest','Alligation','Rice costing ₹40/kg and ₹60/kg is mixed in equal quantities. What is the average cost per kg?',['₹45','₹48','₹50','₹52'],2,'Equal quantities have average cost (40 + 60)/2 = ₹50/kg.'],
+ ['Quantitative Techniques & Data Interpretation','percentages','Data Interpretation','A company’s sales were ₹4 lakh in Q1 and ₹5 lakh in Q2. What was the percentage increase?',['20%','25%','30%','40%'],1,'Increase = ₹1 lakh; percentage increase = 1/4 × 100 = 25%.'],
+ ['Logical Reasoning','series','Syllogism','Statements: All managers are graduates. Some graduates are artists. Which conclusion definitely follows?',['All managers are artists','Some artists are managers','All managers are graduates','No artist is a manager'],2,'The first statement directly establishes that all managers are graduates.'],
+ ['Logical Reasoning','coding','Coding-Decoding','If MANGO is written as OGNAM, how is TRAIN written in the same code?',['NIART','NIRAT','TRAIN','TARIN'],0,'The letters are written in reverse order: TRAIN → NIART.'],
+ ['Logical Reasoning','blood','Family Tree','A is B’s sister. B is C’s father. How is A related to C?',['Mother','Aunt','Sister','Grandmother'],1,'A is the sister of C’s father, so A is C’s aunt.'],
+ ['Logical Reasoning','directions','Direction Sense','Facing north, R turns 90° clockwise, then 180° anticlockwise. Which direction is R facing?',['North','South','East','West'],3,'North → east after 90° clockwise → west after 180° anticlockwise.'],
+ ['Logical Reasoning','series','Critical Reasoning','A city reports fewer accidents after installing streetlights. Which conclusion is safest?',['Streetlights may have contributed to the reduction','Streetlights always eliminate accidents','No other factor changed','Accidents will never occur again'],0,'The timing suggests a possible contribution, but it does not prove streetlights were the only cause.'],
+ ['Language Comprehension','grammar','Direct and Indirect Speech','Choose the correct indirect speech: He said, “I am tired.”',['He said that he was tired.','He said that I am tired.','He says he was tired.','He said he is tiring.'],0,'In reported speech with a past reporting verb, “am” usually shifts to “was.”'],
+ ['Language Comprehension','vocab','Idioms','“Break the ice” means:',['Begin a conversation in a social setting','End a friendship','Make a serious mistake','Delay a decision'],0,'The idiom means to ease tension or begin interaction.'],
+ ['Language Comprehension','grammar','Question Tags','You have completed the assignment, ___?',['haven’t you','didn’t you','don’t you','aren’t you'],0,'The main clause uses “have completed,” so the tag is “haven’t you?”'],
+ ['Language Comprehension','vocab','Cloze Test','Choose the best word: Good leaders listen ___ before making a decision.',['carefully','careful','care','caringly'],0,'“Listen” is a verb and is modified by the adverb “carefully.”'],
+ ['Language Comprehension','grammar','Reading Comprehension','Passage: A library extended its evening hours. Student visits rose, especially among those attending daytime classes. What is the main idea?',['Extended hours improved access for some students','Students stopped using the library','The library reduced its opening hours','Daytime classes were cancelled'],0,'The passage links extended evening access with increased student visits.'],
+ ['General Awareness','gk','Indian Polity','Who is the constitutional head of the Union Executive in India?',['President','Prime Minister','Chief Justice','Speaker of Lok Sabha'],0,'The President is the constitutional head of the Union Executive.'],
+ ['General Awareness','gk','Economy','Inflation refers to:',['A sustained rise in the general price level','A fall in the population','A rise in exports only','A fall in all wages'],0,'Inflation is a sustained increase in the general price level of goods and services.'],
+ ['General Awareness','gk','Geography','Which latitude divides Earth into the Northern and Southern Hemispheres?',['Tropic of Cancer','Equator','Arctic Circle','Prime Meridian'],1,'The Equator is at 0° latitude and divides the two hemispheres.'],
+ ['General Awareness','gk','Science','Which gas do plants absorb for photosynthesis?',['Oxygen','Nitrogen','Carbon dioxide','Hydrogen'],2,'Plants use carbon dioxide and water to produce sugars during photosynthesis.'],
+ ['General Awareness','gk','Indian History','The Dandi March was associated with which movement?',['Non-Cooperation Movement','Civil Disobedience Movement','Quit India Movement','Swadeshi Movement only'],1,'The 1930 Salt March helped launch the Civil Disobedience Movement.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Startup Finance','Crowdfunding raises money by:',['Collecting relatively small contributions from many people','Selling only to one bank','Issuing patents to customers','Avoiding all public communication'],0,'Crowdfunding pools contributions from many individuals, often through online platforms.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Business Strategy','A SWOT analysis examines:',['Strengths, Weaknesses, Opportunities and Threats','Sales, Wages, Output and Tax','Systems, Workflows, Orders and Timing','Strategy, Wealth, Ownership and Trade'],0,'SWOT is a framework for internal strengths/weaknesses and external opportunities/threats.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Customer Discovery','Why do startups interview early customers?',['To test needs and assumptions before scaling','To avoid product feedback','To guarantee every sale','To replace all financial planning'],0,'Customer discovery helps validate the problem, target users and proposed solution.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Business Ethics','A conflict of interest occurs when:',['Personal interests could improperly influence professional judgement','A firm publishes its opening hours','A customer pays an invoice on time','A team meets a deadline'],0,'A conflict exists when competing interests could compromise objective decisions.'],
+ ['Innovation & Entrepreneurship','entrepreneur','Business Growth','A scalable business model can:',['Grow revenue without costs rising at the same rate','Operate only in one fixed transaction','Never use technology','Guarantee profit in every market'],0,'Scalability means growth can occur without proportionate increases in costs.']
+];
+function makeBankQuestion(row){
+ const base=mcq(row[2],row[3],row[4],row[5],row[6]);
+ return {...base,section:row[0],topicId:row[1]};
+}
+function getPracticeQuestions(id,count){
+ const curated=shuffle(curatedQuestions.filter(row=>row[1]===id)).map(makeBankQuestion);
+ const generated=[];
+ while(curated.length+generated.length<count){
+  const q=makeQuestion(id);
+  if(q)generated.push(q);
+  else break;
+ }
+ const combined=shuffle([...curated,...generated]);
+ while(combined.length<count && curated.length){combined.push(makeBankQuestion(pick(curatedQuestions.filter(row=>row[1]===id))));}
+ return combined.slice(0,count);
+}
+let currentTopic=null,currentQuestions=[],lastAnswers=[],testMode='topic',testCount=10,timerInterval=null,secondsRemaining=0,testSubmitted=false;
+const app=document.getElementById('app');
+
+function stopTimer(){if(timerInterval!==null){clearInterval(timerInterval);timerInterval=null;}}
+function formatTime(total){const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),sec=total%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
+function captureAnswers(){lastAnswers=currentQuestions.map((q,i)=>{const checked=document.querySelector(`input[name="q${i}"]:checked`);return checked?Number(checked.value):-1;});}
+function renderHome(){
+ stopTimer();testSubmitted=false;
+ currentTopic=null;
+ const sections=[...new Set(topics.map(t=>t.section))];
+ app.innerHTML=`
+ <section class="hero">
+  <span class="tag">CMAT 2027 PRACTICE</span>
+  <h1>Practice by topic or take a mock test</h1>
+  <p>Choose how many questions you want. Questions and options are shuffled, and the answer review appears after you submit.</p>
+  <p class="notice">CMAT 2026's published pattern was 100 questions, 400 marks, 3 hours, with +4 for a correct answer, −1 for an incorrect answer and 0 for unanswered. The official 2027 pattern may change; check NTA updates. <a href="https://cmat.nta.nic.in/" target="_blank" rel="noopener">Official CMAT website</a>.</p>
+ </section>
+ <section class="card">
+  <h2 style="margin-top:0">What this practice set is based on</h2>
+  <p>I reviewed published CMAT 2023, 2024 and 2025 paper analyses. Across these papers, the stable blueprint is five equal sections (20 questions each) with +4/−1 marking. Reported question types include arithmetic, number systems and chart/table DI; coding, arrangements, syllogisms and critical reasoning; reading comprehension, vocabulary and grammar; static GK with some current affairs; and entrepreneurship concepts such as startup funding, bootstrapping, innovation and intellectual property.</p>
+  <p class="muted">Question distribution varies by shift and year, so this is an exam-style blueprint, not a promise of exact topic counts for CMAT 2027.</p>
+  <p><a href="https://www.shiksha.com/mba/articles/cmat-2024-exam-analysis-check-difficulty-level-of-paper-shift-1-blogId-164683" target="_blank" rel="noopener">2024 analysis</a> · <a href="https://www.mbauniverse.com/articles/cmat-exam-analysis" target="_blank" rel="noopener">2025 analysis</a> · <a href="https://www.shiksha.com/mba/articles/cmat-2023-analysis-check-difficulty-level-of-question-paper-blogId-123045" target="_blank" rel="noopener">2023 analysis</a> · <a href="https://www.prepp.in/cmat-exam/question-paper-2025" target="_blank" rel="noopener">2025 paper resource</a></p>
+ </section>
+ <section class="card">
+  <h2 style="margin-top:0">Quick mock test</h2>
+  <p class="muted">Choose a test length. The 25-question mock is worth 100 marks; the full-length mock follows the 100-question / 400-mark structure.</p>
+  <div class="actions" style="align-items:end">
+   <label style="display:grid;gap:6px;font-weight:700">Mock test length
+    <select id="mockCount" style="padding:11px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff">
+     <option value="25">25 questions · 100 marks · short mock</option>
+     <option value="50">50 questions · 200 marks</option>
+     <option value="100" selected>100 questions · 400 marks · full mock (3 hours)</option>
+    </select>
+   </label>
+   <button type="button" data-action="mock">Start mock test →</button>
+  </div>
+  <p class="notice">Mocks split questions as evenly as possible across the five CMAT sections. This practice file uses CMAT-style questions; it is not an official NTA paper.</p>
+ </section>
+ <section class="card">
+  <h2 style="margin-top:0">Topic-wise practice</h2>
+  <div class="actions" style="align-items:end">
+   <label style="display:grid;gap:6px;font-weight:700">Questions per topic test
+    <select id="topicCount" style="padding:11px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff">
+     <option value="5">5 questions</option><option value="10" selected>10 questions</option><option value="15">15 questions</option><option value="20">20 questions</option><option value="25">25 questions</option>
+    </select>
+   </label>
+   <span class="notice">Each correct answer: +4 marks · Incorrect: −1 mark</span>
+  </div>
+ </section>`+
+ sections.map(section=>`<h2>${section}</h2><div class="grid">${topics.filter(t=>t.section===section).map(t=>`<article class="card"><span class="tag">${t.section}</span><h3>${t.name}</h3><p class="muted">${t.desc}</p><button type="button" data-action="topic" data-topic="${t.id}">Start topic test →</button></article>`).join('')}</div>`).join('');
+}
+
+function startTest(id,count){
+ stopTimer();testSubmitted=false;
+ testMode='topic';
+ currentTopic=topics.find(t=>t.id===id);
+ testCount=count || Number(document.getElementById('topicCount')?.value || 10);
+ currentQuestions=getPracticeQuestions(id,testCount);
+ lastAnswers=Array(testCount).fill(-1);
+ renderTest();
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function startMock(count){
+ stopTimer();testSubmitted=false;
+ testMode='mock';
+ secondsRemaining=180*60*count/100;
+ currentTopic={id:'mock',name:count===25?'100-Mark CMAT Mock Test':count===100?'Full-Length CMAT Mock Test':`${count}-Question CMAT Mock Test`};
+ const sections=['Quantitative Techniques & Data Interpretation','Logical Reasoning','Language Comprehension','General Awareness','Innovation & Entrepreneurship'];
+ const perSection=Math.floor(count/sections.length),remainder=count%sections.length;
+ currentQuestions=[];
+ sections.forEach((section,si)=>{
+  const needed=perSection+(si<remainder?1:0);
+  const bank=shuffle(curatedQuestions.filter(row=>row[0]===section));
+  const curatedNeeded=Math.min(needed,bank.length);
+  currentQuestions.push(...bank.slice(0,curatedNeeded).map(makeBankQuestion));
+  const sectionTopics=topics.filter(t=>t.section===section);
+  for(let i=curatedNeeded;i<needed;i++){
+   const topic=pick(sectionTopics);
+   currentQuestions.push(makeQuestion(topic.id));
+  }
+ });
+ currentQuestions=shuffle(currentQuestions);
+ lastAnswers=Array(count).fill(-1);
+ renderTest();
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderTest(){
+ const marks=currentQuestions.length*4;
+ const timed=testMode==='mock';
+ app.innerHTML=`<section class="hero"><span class="tag">${timed?'CMAT MOCK EXAM':'TOPIC PRACTICE'}</span><h1>${currentTopic.name}</h1><p>${currentQuestions.length} questions · Maximum ${marks} marks · +4 correct, −1 incorrect, 0 unanswered.</p><p>${timed?`Exam timer: ${formatTime(Math.ceil(secondsRemaining))}. Full-length test: 180 minutes.`:'Untimed practice.'} Answer the questions and submit to see solutions.</p><div class="actions"><button type="button" class="secondary" data-action="home">← All topics</button></div></section>
+ ${timed?`<div class="exambar"><div><div class="exam-note">TIME REMAINING</div><div id="timer" class="timer">${formatTime(Math.ceil(secondsRemaining))}</div></div><div><div class="exam-note">EXAM PROGRESS</div><div id="answeredCount" class="answered-count">0 / ${currentQuestions.length} answered</div></div><div class="exam-note">Each correct +4 · Each incorrect −1</div></div>`:''}
+ <div id="questionList">${currentQuestions.map((q,i)=>`<section class="card question"><div class="qmeta">Question ${i+1} of ${currentQuestions.length} · ${q.type}</div><div class="qtext">${q.question}</div>${q.options.map((o,j)=>`<label class="option"><input type="radio" name="q${i}" value="${j}"><span><strong>${String.fromCharCode(65+j)}.</strong> ${o}</span></label>`).join('')}</section>`).join('')}</div>
+ <div class="card actions"><button type="button" data-action="submit">Submit exam & review solutions</button><button type="button" class="secondary" data-action="restart">Restart with shuffled questions</button></div>`;
+ if(timed){
+  timerInterval=setInterval(()=>{
+   if(testSubmitted){stopTimer();return;}
+   secondsRemaining=Math.max(0,secondsRemaining-1);
+   const timer=document.getElementById('timer');
+   if(timer){timer.textContent=formatTime(secondsRemaining);timer.classList.toggle('warning',secondsRemaining<=300);}
+   if(secondsRemaining<=0){captureAnswers();submitTest(true);}
+  },1000);
+ }
+ updateAnsweredCount();
+}
+
+function updateAnsweredCount(){const el=document.getElementById('answeredCount');if(el){const answered=lastAnswers.filter(v=>v!==-1).length;el.textContent=`${answered} / ${currentQuestions.length} answered`;}}
+function submitTest(auto=false){
+ if(testSubmitted)return;testSubmitted=true;stopTimer();
+ const score=currentQuestions.reduce((sum,q,i)=>sum+(lastAnswers[i]===q.answer?4:lastAnswers[i]===-1?0:-1),0);
+ renderResults(score,auto);
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderResults(score,auto=false){
+ const correct=currentQuestions.filter((q,i)=>lastAnswers[i]===q.answer).length;
+ const wrong=currentQuestions.filter((q,i)=>lastAnswers[i]!==-1&&lastAnswers[i]!==q.answer).length;
+ const unanswered=currentQuestions.length-correct-wrong;
+ const max=currentQuestions.length*4;
+ const pct=Math.max(0,Math.min(100,score/max*100));
+ app.innerHTML=`<section class="hero"><span class="tag">TEST COMPLETED</span><h1>${currentTopic.name} — Results</h1><p>${auto?'Time is up. Your exam was submitted automatically.':'Your answers have been submitted.'}</p><div class="score">${score} / ${max} marks</div><p>${correct} correct · ${wrong} incorrect · ${unanswered} unanswered</p><p>Accuracy: ${Math.round(correct/currentQuestions.length*100)}%. Incorrect answers have a one-mark penalty.</p><div class="progress"><span style="width:${pct}%"></span></div><div class="actions"><button type="button" data-action="restart">Try again with shuffled questions ↻</button><button type="button" class="secondary" data-action="home">Choose another test</button></div></section>`+
+ currentQuestions.map((q,i)=>`<section class="card question"><div class="qmeta">Question ${i+1} · ${q.type}</div><div class="qtext">${q.question}</div>${q.options.map((o,j)=>`<div class="option ${j===q.answer?'correct':(j===lastAnswers[i]&&j!==q.answer?'incorrect':'')}"><span><strong>${String.fromCharCode(65+j)}.</strong> ${o}</span>${j===q.answer?'<strong style="margin-left:auto">Correct answer</strong>':''}${j===lastAnswers[i]&&j!==q.answer?'<strong style="margin-left:auto">Your answer</strong>':''}</div>`).join('')}<div class="solution"><strong>${lastAnswers[i]===q.answer?'Correct!':`Correct answer: ${q.options[q.answer]}`}</strong><br><strong>Explanation:</strong> ${q.explanation}${lastAnswers[i]===-1?'<br><span class="muted">You did not answer this question.</span>':''}</div></section>`).join('');
+}
+
+/* One delegated event handler: no inline JavaScript or form submission is required. */
+document.addEventListener('click',function(event){
+ const button=event.target.closest('button[data-action]');
+ if(!button)return;
+ const action=button.dataset.action;
+ if(action==='topic') startTest(button.dataset.topic,Number(document.getElementById('topicCount')?.value||10));
+ else if(action==='mock') startMock(Number(document.getElementById('mockCount')?.value||25));
+ else if(action==='home') renderHome();
+ else if(action==='submit'){
+  captureAnswers();
+  submitTest(false);
+ }else if(action==='restart'){
+  if(testMode==='mock') startMock(currentQuestions.length);
+  else startTest(currentTopic.id,currentQuestions.length);
+ }
+});
+document.addEventListener('change',function(event){
+ if(event.target.matches('input[type="radio"][name^="q"]')){
+  captureAnswers();updateAnsweredCount();
+ }
+});
+renderHome();
+</script>
+</body>
+</html>
